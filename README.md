@@ -9,6 +9,66 @@ FinRAG is a Retrieval-Augmented Generation (RAG) system tailored for quantitativ
 
 The system achieves ~62.5% accuracy on evaluation sets and provides full transparency into its reasoning process through detailed intermediate outputs.
 
+## Run Locally (Windows PowerShell)
+
+Run these steps in order. The application uses a local ChromaDB index and calls OpenAI and Cohere, so you need internet access for the initial model download and valid API keys.
+
+1. **Install Python 3.11 and Poetry.** If Poetry is not installed, run:
+
+   ```powershell
+   curl.exe -sSL https://install.python-poetry.org | py -
+   ```
+
+   Close and reopen PowerShell after installation, then verify:
+
+   ```powershell
+   poetry --version
+   py --version
+   ```
+
+2. **Open the FinRAG project folder.** Change the path below if you cloned the project elsewhere:
+
+   ```powershell
+   Set-Location 'C:\Users\ranja\Ranjan_Doc\Ranjan\NJIT\ms\NLP\Project\project-nlp\finrag'
+   ```
+
+   All commands below should be run from this folder.
+
+3. **Install project dependencies:**
+
+   ```powershell
+   poetry install
+   ```
+
+   This installs the app, ChromaDB, and development tools into Poetry's virtual environment. Use `poetry run` for subsequent commands; activating a separate shell is not required.
+
+4. **Configure API keys.** Create or edit `.env` in this folder and add your own keys:
+
+   ```env
+   OPENAI_API_KEY=your_openai_api_key
+   COHERE_API_KEY=your_cohere_api_key
+   ```
+
+   The app uses OpenAI for the reasoning agent and Cohere for reranking. Do not commit `.env` or share its contents.
+
+5. **Build the local vector index.** The included `data\train.json` is the input dataset. If it is missing, download the ConvFinQA training data and save it at that location. Then run:
+
+   ```powershell
+   poetry run python .\scripts\load_chroma_mpnet.py
+   ```
+
+   This downloads/loads the `all-mpnet-base-v2` embedding model, processes the dataset, and creates `chroma_db_mpnet`. Indexing can take a long time and should be run once; wait for the script to finish before starting the app.
+
+6. **Start the Streamlit app:**
+
+   ```powershell
+   poetry run streamlit run .\app.py
+   ```
+
+   Open the local URL printed by Streamlit. Enter a question, retrieve evidence, then select **Run Agent with Evidence**.
+
+The other indexing scripts are for legacy/alternative workflows: the UI's active retriever expects the ChromaDB collection created by `load_chroma_mpnet.py`; Pinecone setup is not needed to run the app.
+
 ## RAG Pipeline Overview
 
 The following diagram illustrates the core workflow of FinRAG:
@@ -97,14 +157,11 @@ Here are a few examples of the types of financial reasoning questions FinRAG can
 ```bash
 poetry run pytest
 ```
-See the [Test Suite Summary](docs/test_suite_summary.md) for further details about tests.
+The current test suite does not pass collection: `tests/test_agent.py` expects a legacy `FUNCTION_NAME` symbol, and `src/finrag/eval.py` contains indentation errors. See the [Test Suite Summary](docs/test_suite_summary.md) for test coverage details.
 
 ## Evaluation
 
-```bash
-poetry run python src/finrag/eval.py --split dev --sample 5
-```
-See the [Evaluation](docs/evaluation.md) section for details about the evaluation methodology.
+See the [Evaluation](docs/evaluation.md) document for the evaluation methodology and recorded results. The checked-in evaluation script currently has indentation errors and is not a runnable workflow.
 
 ---
 
@@ -143,4 +200,3 @@ Based on the development and evaluation conducted within the one-week timeframe,
 4.  **Basic Chunking Strategy:** The current approach of chunking by paragraphs and table rows is relatively simple. More advanced strategies (e.g., smaller/overlapping chunks, recursive retrieval, proposition-based indexing) might improve the retriever's ability to isolate specific facts.
 5.  **Performance Ceiling:** Despite extensive tuning within the week, the peak accuracy achieved (~62.5% on the sample set) indicates significant room for improvement. Addressing the retrieval and extraction shortcomings would be necessary to push performance higher.
 6.  **Scalability Concerns (Indexing Time):** While ChromaDB enabled full dataset indexing locally, the ~8-hour indexing time highlights potential challenges for significantly larger datasets or scenarios requiring frequent updates without GPU acceleration.
-
