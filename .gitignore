@@ -42,3 +42,4 @@ docs/prd2.md
 # vector store file
 chroma_db/
 chroma_db_mpnet/
+.env
