@@ -35,8 +35,14 @@ Four stages, four jobs:
 4. [`4-rrf.py`](./4-rrf.py). Reciprocal Rank Fusion in ten lines of Python.
 5. [`5-rerank.py`](./5-rerank.py). Cohere `rerank-v4.0-fast` on the top-50 hybrid candidates.
 6. [`6-evaluate.py`](./6-evaluate.py). NDCG@10 for all four stages on the FiQA test set.
+7. [`7-llm-retrieval.py`](./7-llm-retrieval.py). Generate a grounded answer from retrieved documents.
+8. [`8-streamlit-app.py`](./8-streamlit-app.py). Ask questions interactively in a Streamlit UI.
 
 The [`utils/`](./utils/) folder holds the cleaned-up helpers that files 4 through 6 import from. [`utils/retrievers.py`](./utils/retrievers.py) wraps BM25 and dense retrieval, [`utils/fusion.py`](./utils/fusion.py) wraps RRF, and [`utils/reranker.py`](./utils/reranker.py) wraps the Cohere cross-encoder call. The numbered files build each concept inline first so you see the construction on screen, then later files import the polished version instead of redefining it.
+
+### Embedding cache and API usage
+
+`3-embed.py` saves the corpus embedding matrix to `indexes/dense/embeddings.npy` and loads it on later runs, so it does not re-embed the FiQA corpus unless that cache is removed. Dense retrieval also caches each exact query's embedding locally in `indexes/dense/query_embeddings.sqlite3`; repeating the same query avoids another embeddings API request. The cache key includes the embedding model, so switching models uses a separate entry. A new or differently worded query still needs one OpenAI embedding request. Generating an answer with the LLM also still makes a chat-completion API request.
 
 ## Why each piece earns its place
 
@@ -118,3 +124,21 @@ The mechanics generalize. Replace FiQA with your help center, internal wiki, sal
 7. **Build an evaluation set on your own data.** Without ground truth, you cannot tell whether your pipeline is good or which knob actually moves the needle. The cheapest path is to **let an LLM generate queries against your real documents**, then evaluate every retrieval variant against that synthetic eval set. Recipe in [`docs/build-your-own-eval.md`](./docs/build-your-own-eval.md).
 
 Once steps 1 to 6 are wired up and step 7 gives you a feedback loop, the rest is iteration. Swap an embedding model, change chunk size, tune `candidate_k`, try a different reranker, and watch NDCG@10 move. That's the whole job.
+
+## Grounded GPT answers and Streamlit app
+
+After downloading FiQA and building both indexes, run the command-line question-answering script from this directory:
+
+```bash
+poetry run python 7-llm-retrieval.py "Where should I keep my emergency fund?"
+```
+
+Or launch the interactive interface:
+
+```bash
+poetry run streamlit run 8-streamlit-app.py
+```
+
+Both use BM25 and dense retrieval with RRF, then ask the configured OpenAI chat model to answer only from the retrieved documents. Answers include source IDs; the model is instructed to say when the retrieved evidence is insufficient, but generated answers still need independent verification. Configure `OPENAI_API_KEY` in `.env`. The default chat model is `gpt-6-luna`, OpenAI's current cost-efficient model, and it supports the Chat Completions endpoint used here. Override it with `OPENAI_CHAT_MODEL` if another model is available to your account. Query embeddings and answer generation both use the OpenAI API and may incur charges. Check current [OpenAI pricing](https://developers.openai.com/api/docs/pricing) and [model docs](https://developers.openai.com/api/docs/models/gpt-6-luna) because model prices and availability can change.
+
+From the `hybrid-retrieval` directory, `bash ./command.sh` installs dependencies if needed, downloads/builds only missing data and indexes, then starts `8-streamlit-app.py`. The script reads `.env` from this same directory, so the expected path is `hybrid-retrieval/.env`. Existing dataset and index caches are reused. It does not rerun the Cohere evaluation by default. To run evaluation before opening the app, set `RUN_EVALUATION=1`; this requires a Cohere API key and makes additional API requests. On PowerShell with Git Bash installed, run `bash .\command.sh`; optionally set the environment variable first with `$env:RUN_EVALUATION = "1"`.

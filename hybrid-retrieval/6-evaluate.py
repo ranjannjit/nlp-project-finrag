@@ -6,9 +6,10 @@ Normalized Discounted Cumulative Gain at 10 (NDCG@10) is the standard retrieval 
 It rewards putting relevant docs high in the top-10 and penalizes putting them low.
 Perfect ranking = 1.0.
 
-We evaluate on 50 randomly sampled test queries so all four methods stay
-within Cohere's free tier (10 calls/minute, 1,000/month for trial keys).
-Set RERANK_SAMPLE_SIZE = None to run all 648 queries (paid tier or patience).
+We evaluate on 50 randomly sampled test queries. Cohere rerank requests are
+paced to stay below the trial rate limit (10 calls/minute); this sample takes
+several minutes. Cohere trial keys may also have monthly quotas.
+Set RERANK_SAMPLE_SIZE to a smaller integer for a faster, smaller evaluation.
 
 Public BEIR baselines for FiQA NDCG@10:
     BM25                       ~24

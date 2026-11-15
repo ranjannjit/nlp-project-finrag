@@ -4,8 +4,10 @@ Polished version of the Cohere cross-encoder rerank built in 5-rerank.py.
 """
 
 import os
+import time
 import cohere
 import pandas as pd
+from cohere.errors import TooManyRequestsError
 from dotenv import load_dotenv
 from utils.fusion import hybrid_candidates
 from utils.retrievers import BM25Retriever, DenseRetriever
@@ -13,6 +15,10 @@ from utils.retrievers import BM25Retriever, DenseRetriever
 load_dotenv()
 co = cohere.ClientV2(api_key=os.getenv("COHERE_API_KEY"))
 RERANK_MODEL = "rerank-v4.0-fast"
+MIN_REQUEST_INTERVAL_SECONDS = 6.5
+RATE_LIMIT_RETRY_SECONDS = 62
+MAX_RATE_LIMIT_RETRIES = 2
+_last_request_at = 0.0
 
 
 def rerank_with_cohere(
@@ -21,8 +27,25 @@ def rerank_with_cohere(
     corpus_by_id: pd.DataFrame,
     k: int = 10,
 ) -> list[tuple[str, float]]:
+    global _last_request_at
+
     documents = [corpus_by_id.loc[d, "text"] for d in candidate_ids]
-    response = co.rerank(model=RERANK_MODEL, query=query, documents=documents, top_n=k)
+    for attempt in range(MAX_RATE_LIMIT_RETRIES + 1):
+        elapsed = time.monotonic() - _last_request_at
+        if elapsed < MIN_REQUEST_INTERVAL_SECONDS:
+            time.sleep(MIN_REQUEST_INTERVAL_SECONDS - elapsed)
+
+        _last_request_at = time.monotonic()
+        try:
+            response = co.rerank(
+                model=RERANK_MODEL, query=query, documents=documents, top_n=k
+            )
+            break
+        except TooManyRequestsError:
+            if attempt == MAX_RATE_LIMIT_RETRIES:
+                raise
+            time.sleep(RATE_LIMIT_RETRY_SECONDS)
+
     return [(candidate_ids[r.index], r.relevance_score) for r in response.results]
 
 
