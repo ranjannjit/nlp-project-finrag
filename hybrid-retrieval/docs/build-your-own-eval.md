@@ -1,6 +1,6 @@
 # Build a BEIR-style eval set from your own corpus
 
-The tutorial evaluates on FiQA because it ships with human-labeled qrels. Your own corpus will not. This doc shows the cheapest path to get a usable eval set anyway: **let an LLM generate the queries against your real documents**, then plug the result straight into [`6-evaluate.py`](../6-evaluate.py).
+This project evaluates on FiQA because it ships with human-labeled qrels. A new corpus will not necessarily include relevance judgments. This document describes a low-cost way to create an evaluation set: **let an LLM generate queries against your real documents**, then plug the result into [`6-evaluate.py`](../6-evaluate.py).
 
 The output is a folder that looks exactly like FiQA's: three parquet files (`corpus.parquet`, `queries.parquet`, `qrels.parquet`) with the BEIR schema. The rest of the pipeline does not change.
 

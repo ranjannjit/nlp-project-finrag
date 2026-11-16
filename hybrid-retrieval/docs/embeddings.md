@@ -56,7 +56,7 @@ Once both are unit vectors, scoring the entire corpus is a **single matrix-vecto
 scores = doc_embeddings_normed @ query_vec   # shape: (N,)
 ```
 
-That's it. No special library, no vector database. For tutorial-sized corpora (under a few million docs), numpy is faster than going through any vector DB because there's no network hop and no index overhead. You only need a vector DB when the matrix no longer fits in RAM or you need filtered/hybrid queries handled by the engine.
+That's it. No special library, no vector database. For a small-to-medium corpus like the one used in this project, numpy is faster than going through any vector DB because there's no network hop and no index overhead. You need a vector DB when the matrix no longer fits in RAM or you need filtered/hybrid queries handled by the engine.
 
 ## What `3-embed.py` is actually doing
 

@@ -89,10 +89,10 @@ Typical improvement from adding a cross-encoder reranker on top of a hybrid base
 
 | Model                                | Where it runs | Strength                                                                |
 | ------------------------------------ | ------------- | ----------------------------------------------------------------------- |
-| **Cohere `rerank-v4.0-fast`**        | API           | Strong out of the box, multilingual. What this tutorial uses.           |
+| **Cohere `rerank-v4.0-fast`**        | API           | Strong out of the box, multilingual. What this project uses.             |
 | **Cohere `rerank-v4.0`**             | API           | Slower than `-fast`, slightly better quality.                           |
 | **Voyage `rerank-2.5-lite`**         | API           | Competitive with Cohere, sometimes better on technical content.         |
-| **BAAI `bge-reranker-v2-m3`**        | Local         | Strongest open-weight option, ~568MB. CPU-runnable for tutorial scale.  |
+| **BAAI `bge-reranker-v2-m3`**        | Local         | Strong open-weight option, ~568MB. CPU-runnable at FiQA project scale.  |
 | **Cross-encoder `ms-marco-MiniLM-L-6-v2`** | Local   | Tiny (~80MB), fast on CPU, the classic sentence-transformers default.   |
 
 The swap is one function. If you replace `co.rerank(...)` with `bge_reranker.compute_scores([(query, d) for d in candidate_texts])` and sort by the resulting scores, you have a fully-local pipeline. Latency goes up (running a 568MB model on CPU is not free), but you stop paying per-query.

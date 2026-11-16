@@ -72,11 +72,11 @@ urllib3            2.8.0           HTTP library with thread-safe connection pool
 xxhash             4.1.0           Python binding for xxHash
 """ -->
 
-# FiQA-BEIR walkthrough
+# FiQA-BEIR project overview
 
 This project demonstrates a retrieval pipeline over the FiQA financial question-answering benchmark. It combines keyword retrieval (BM25), semantic retrieval (OpenAI embeddings), Reciprocal Rank Fusion (RRF), and Cohere reranking, then measures retrieval quality with NDCG@10.
 
-The walkthrough below follows the Python files in execution order. Each item explains the source statements in sequence; blank lines and comments are grouped with the surrounding code.
+This project overview follows the Python files in execution order. Each item explains the source statements in sequence; blank lines and comments are grouped with the surrounding code.
 
 ## Setup
 

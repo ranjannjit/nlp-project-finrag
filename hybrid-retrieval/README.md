@@ -81,9 +81,9 @@ You need two API keys in `.env`:
 
 ## Where these recommendations come from
 
-- **`bm25s` over `rank_bm25`.** The `bm25s` benchmark reports ~500x speedup over `rank_bm25` while staying pure Python and pip-installable ([bm25s GitHub](https://github.com/xhluca/bm25s)). For a tutorial corpus you would not notice, but the persistence story (`save` / `load` with the corpus, optional memory mapping) is materially cleaner.
-- **`text-embedding-3-small` as the default.** OpenAI's announcement reports 62.3 on MTEB for `text-embedding-3-small` versus 64.6 for `text-embedding-3-large`, at roughly 6.5x lower cost ($0.02 vs $0.13 per 1M tokens) ([OpenAI: new embedding models](https://openai.com/index/new-embedding-models-and-api-updates/)). For a tutorial baseline that gets fused with BM25 and reranked anyway, a 2-point MTEB gap is well within the noise that the rest of the pipeline contributes. Spend the optimization budget on retrieval design, not on a marginally better embedding model.
-- **RRF with k=60.** The 2009 paper that introduced it called it "simple but effective" and twelve years of follow-up work have not unseated it ([Cormack et al., SIGIR 2009](https://plg.uwaterloo.ca/~gvcormac/cormacksigir09-rrf.pdf)). Newer "learned" fusion methods exist but require training data the tutorial doesn't need.
+- **`bm25s` over `rank_bm25`.** The `bm25s` benchmark reports ~500x speedup over `rank_bm25` while staying pure Python and pip-installable ([bm25s GitHub](https://github.com/xhluca/bm25s)). At the scale of this project, the persistence story (`save` / `load` with the corpus, optional memory mapping) is also materially cleaner.
+- **`text-embedding-3-small` as the default.** OpenAI's announcement reports 62.3 on MTEB for `text-embedding-3-small` versus 64.6 for `text-embedding-3-large`, at roughly 6.5x lower cost ($0.02 vs $0.13 per 1M tokens) ([OpenAI: new embedding models](https://openai.com/index/new-embedding-models-and-api-updates/)). For this project's baseline, which fuses embeddings with BM25 and reranks the results, the MTEB difference does not justify the higher embedding cost. The project focuses on retrieval design rather than a marginally stronger embedding model.
+- **RRF with k=60.** The 2009 paper that introduced it called it "simple but effective" and twelve years of follow-up work have not unseated it ([Cormack et al., SIGIR 2009](https://plg.uwaterloo.ca/~gvcormac/cormacksigir09-rrf.pdf)). Newer "learned" fusion methods exist but require training data that is outside this project's scope.
 - **Cohere `rerank-v4.0-fast` over alternatives.** Top of public reranker benchmarks in 2026, generous free tier, single API call, no model to host ([Cohere Rerank docs](https://docs.cohere.com/docs/rerank-overview)). The open-weight alternative I would mention to viewers who want to ship offline is BGE Reranker v2-m3 ([BGE Reranker on HF](https://huggingface.co/BAAI/bge-reranker-v2-m3)).
 - **The four-stage pipeline order.** "Start with hybrid retrieval, not dense-only. The extra complexity is worth it; you'll end up adding BM25 later anyway after the first major hallucination incident" ([Supermemory hybrid search guide, April 2026](https://supermemory.ai/blog/hybrid-search-guide/)).
 
@@ -95,11 +95,11 @@ FiQA is a published benchmark with real qrels, so you can compute honest NDCG@10
 
 ### Why not a vector database?
 
-A vector database is a deployment concern, not a retrieval concern. The retrieval pattern in this tutorial (BM25 + dense + RRF + rerank) is what runs on top of one. For small corpora, numpy on a single embeddings matrix is faster than going through any vector DB. Once you outgrow that, swap the dot-product step for Qdrant, LanceDB, or pgvector. The rest of the pipeline does not change.
+A vector database is a deployment concern, not a retrieval concern. The retrieval pattern used in this project (BM25 + dense + RRF + rerank) can also run on top of one. For small corpora, numpy on a single embeddings matrix is faster than going through any vector DB. Once you outgrow that, swap the dot-product step for Qdrant, LanceDB, or pgvector. The rest of the pipeline does not change.
 
 ### Can I use a local reranker instead of Cohere?
 
-Yes. [`BAAI/bge-reranker-v2-m3`](https://huggingface.co/BAAI/bge-reranker-v2-m3) is the strongest open-weight option, ~568 MB, runs on CPU for tutorial-sized corpora. Latency is meaningfully higher than an API call, which is why the tutorial defaults to Cohere. The swap is a one-function change in [`5-rerank.py`](./5-rerank.py).
+Yes. [`BAAI/bge-reranker-v2-m3`](https://huggingface.co/BAAI/bge-reranker-v2-m3) is a strong open-weight option, ~568 MB, and can run on CPU for corpora around the size used in this project. Latency is meaningfully higher than an API call, which is why this project uses Cohere by default. The swap is a one-function change in [`5-rerank.py`](./5-rerank.py).
 
 ### Can I chunk longer documents than FiQA posts?
 
