@@ -99,6 +99,22 @@ Four lines. Embed the query, normalize it, dot-product against the entire corpus
 
 **Bad at:** exact terms, rare identifiers, ticker symbols, regulation names, error codes, function names. The embedding will quietly drift toward "general semantic neighborhood" and rank a doc that talks about *similar* things above the one that contains the exact term you typed. This is precisely BM25's strength. Which is why we fuse the two with RRF in [`4-rrf.py`](../4-rrf.py).
 
+## FiQA example: the same question with different wording
+
+FiQA document `376148` recommends CDs, a money market account, or a savings account for a rainy-day fund and says the money should remain easy to access.
+
+An exact-keyword version is:
+
+> Where can I park my rainy-day / emergency fund?
+
+BM25 can match this passage's distinctive terms directly; on the local index this query ranked document `376148` first.
+
+A paraphrased version is:
+
+> Where can I keep money for unexpected expenses and still get to it quickly?
+
+This asks for the same kind of advice, but phrases it differently. Dense retrieval compares the query and document embeddings, so it is designed to match the shared idea of keeping funds available for emergencies even when distinctive words such as `rainy-day` and `park` are absent. In the local BM25 index, the paraphrased wording ranked different documents above `376148`, illustrating why embeddings complement exact-term search. These are examples of each method's strength, not a guarantee that one retriever always returns a particular rank; check actual rankings and evaluation results for each query.
+
 ## Other distance metrics you'll see
 
 | Metric              | Formula                                       | When to use                                                    |
